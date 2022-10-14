@@ -46,6 +46,7 @@ extension MIMEUploadingTask {
 			data.append(text)
 			
 			if !base64Encoded, let fieldData = field.dataContent {
+				data.append("Content-Transfer-Encoding: binary\(lineBreak)\(lineBreak)")
 				data.append(fieldData)
 			}
 			if index != fields.indices.last { data.append(boundary + lineBreak) }
@@ -66,8 +67,9 @@ public enum MIMEMessageComponent {
 		var result = ""
 		
 		result.append("Content-Disposition: \(disposition)\(lineBreak)")
-		result.append("Content-Type: \(contentType)\(lineBreak)\(lineBreak)")
+		result.append("Content-Type: \(contentType)\(lineBreak)")
 		if let text = textContent {
+			result.append(lineBreak)
 			result.append(text)
 			result.append(lineBreak)
 		} else if base64Encoded, let encodedData = dataContent?.base64EncodedString() {
