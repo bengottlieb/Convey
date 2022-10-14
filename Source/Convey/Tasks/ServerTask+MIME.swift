@@ -8,7 +8,7 @@
 import Foundation
 
 public extension String {
-	static var sampleMIMEBoundary: String { "----------" + UUID().uuidString }
+	static var sampleMIMEBoundary: String { UUID().uuidString }
 }
 
 fileprivate extension String {
@@ -31,12 +31,12 @@ extension MIMEUploadingTask {
 
 	public func mimeData(base64Encoded: Bool) -> Data? {
 		guard let fields = mimeFields else { return nil }
-		let boundary = mimeBoundary
+		let boundary = "--" + mimeBoundary
 	//	let contentType = "application/json;charset=utf-8"
 		
 		var data = Data()
-		data.append("Content-Type: multipart/form-data;boundary=\(boundary)" + lineBreak + lineBreak)
-		data.append(mimeBoundary + lineBreak)
+		data.append("Content-Type: multipart/form-data;boundary=\(mimeBoundary)" + lineBreak + lineBreak)
+		data.append(boundary + lineBreak)
 		
 		zip(fields, fields.indices).forEach { field, index in
 			var text = ""
@@ -105,10 +105,10 @@ public enum MIMEMessageComponent {
 	
 	var contentType: String {
 		var result = rawContentType
-		switch self {
-		case .text: result += "; charset=\"iso-8859-1\""
-		default: break
-		}
+//		switch self {
+//		case .text: result += "; charset=\"iso-8859-1\""
+//		default: break
+//		}
 		return result
 	}
 	
