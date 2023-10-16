@@ -23,7 +23,8 @@ public extension ServerTask {
 				request = try await server.preflight(self, request: request)
 				await ConveyTaskManager.instance.begin(task: self, request: request, startedAt: startedAt)
 				
-				try await server.session.downloadFile(from: request, to: destination)
+				let session = ConveySession(task: self)
+				try await session.downloadFile(from: request, to: destination)
 				
 				try await (self as? PostFlightTask)?.postFlight()
 				if let threadName = (self as? ThreadedServerTask)?.threadName { await server.stopWaiting(forThread: threadName) }

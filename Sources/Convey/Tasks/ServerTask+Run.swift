@@ -118,7 +118,8 @@ extension ServerTask {
 				request = try await server.preflight(self, request: request)
 				await ConveyTaskManager.instance.begin(task: self, request: request, startedAt: startedAt)
 
-				var result = try await server.data(for: request)
+				let session = ConveySession(task: self)
+				var result = try await session.data(for: request)
 				if result.statusCode == 304, let data = DataCache.instance.fetchLocal(for: url), !data.data.isEmpty {
 					result.data = data.data
 					await ConveyTaskManager.instance.complete(task: self, request: request, response: result.response, bytes: result.data, startedAt: startedAt, usingCache: true)
