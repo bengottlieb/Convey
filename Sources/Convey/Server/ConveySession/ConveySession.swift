@@ -1,6 +1,6 @@
 //
-//  File.swift
-//  
+//  ConveySession.swift
+//
 //
 //  Created by Ben Gottlieb on 10/16/23.
 //
@@ -9,15 +9,33 @@ import Foundation
 
 class ConveySession: NSObject {
 	var session: URLSession!
+	let server: ConveyServer
+	var queue: OperationQueue?
 	
+	var receivedData: Data?
+	var streamContinuation: AsyncStream<ServerEvent>.Continuation?
+
 	init(task: ServerTask) {
+		server = task.server
 		super.init()
 
 		let config = task.server.configuration
 		config.allowsCellularAccess = true
 		config.allowsConstrainedNetworkAccess = true
+		
+		if task is ServerSentEventTargetTask {
+			var additionalHeaders: [String: String] = [:]
+			additionalHeaders["Accept"] = "text/event-stream"
+			additionalHeaders["Cache-Control"] = "no-cache"
 
-		session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
+			config.timeoutIntervalForRequest = TimeInterval(INT_MAX)
+			config.timeoutIntervalForResource = TimeInterval(INT_MAX)
+			config.httpAdditionalHeaders = additionalHeaders
+			
+			queue = OperationQueue()
+		}
+
+		session = URLSession(configuration: config, delegate: self, delegateQueue: queue)
 	}
 	
 	func data(for url: URL) async throws -> ServerReturned {
@@ -25,7 +43,10 @@ class ConveySession: NSObject {
 	}
 	
 	func data(for request: URLRequest) async throws -> ServerReturned {
-		try await data(from: request)
+		server.register(session: self)
+		let result = try await data(from: request)
+		server.unregister(session: self)
+		return result
 	}
 }
 

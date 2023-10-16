@@ -34,7 +34,8 @@ open class ConveyServer: NSObject, ObservableObject {
 	open var maxLoggedUploadSize = 1024 * 4
 	open var launchedAt = Date()
 	open var echoAll = false
-	
+	var activeSessions: Set<ConveySession> = []
+
 	private var defaultHeaders: [String: String] = [
 		ServerConstants.Headers.accept: "*/*"
 	]
@@ -98,6 +99,7 @@ open class ConveyServer: NSObject, ObservableObject {
 	open var reportConnectionError: (ServerTask, Int, String?) -> Void = { task, code, description in
         print("\(type(of: task)), \(task.url) Connection error: \(code): \(description ?? "Unparseable error")")
 	}
+	
 }
 
 public extension Int {
