@@ -36,6 +36,7 @@ extension ServerTask where Self: ServerSentEventTargetTask {
 						}
 					}
 				}
+				continuation.finish()
 			}
 		}
 	}
