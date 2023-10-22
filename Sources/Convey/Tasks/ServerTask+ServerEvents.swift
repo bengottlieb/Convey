@@ -7,6 +7,8 @@
 
 import Foundation
 
+public enum ServerSentEventError: Error { case cancelled }
+
 extension ServerTask where Self: ServerSentEventTargetTask {
 	public func eventStream() async throws -> AsyncStream<ServerEvent> {
 		try await handleThreadAndBackgrounding {
@@ -17,15 +19,25 @@ extension ServerTask where Self: ServerSentEventTargetTask {
 			
 			return try session.start(request: request)
 		}
+	}
 
+	public func stream<Element: Codable>(_ result: Element.Type, shouldCancel: @escaping () -> Bool = { false }) async throws -> AsyncThrowingStream<Element, Error> {
+		let stream: AsyncThrowingStream<Element, Error> = try await self.stream(shouldCancel: shouldCancel)
+		return stream
 	}
 	
-	public func stream<Element: Codable>() async throws -> AsyncThrowingStream<Element, Error> {
+	public func stream<Element: Codable>(shouldCancel: @escaping () -> Bool = { false }) async throws -> AsyncThrowingStream<Element, Error> {
 		let stream = try await eventStream()
 		
 		return AsyncThrowingStream(Element.self) { continuation in
 			Task {
 				for await event in stream {
+					if shouldCancel() {
+						print("Cancelling")
+						continuation.finish(throwing: ServerSentEventError.cancelled)
+						return
+					}
+					
 					if let string = event.data, let data = string.data(using: .utf8) {
 						do {
 							let element = try JSONDecoder().decode(Element.self, from: data)
